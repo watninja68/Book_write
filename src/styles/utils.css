@@ -1,0 +1,78 @@
+/* Base */
+.c {
+  @apply max-w-2xl mx-auto;
+}
+
+/* Cards */
+.d {
+  @apply bg-gray-800/50 backdrop-blur-xl p-8 rounded-2xl border border-gray-700 shadow-xl transition-all duration-300;
+}
+
+.dh {
+  @apply hover:border-blue-500/50 hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/10;
+}
+
+/* Typography */
+.g {
+  @apply bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent;
+}
+
+.t1 {
+  @apply text-2xl font-bold tracking-tight;
+}
+
+.t2 {
+  @apply text-xl font-semibold tracking-wide;
+}
+
+.t3 {
+  @apply text-lg font-medium tracking-wide;
+}
+
+/* Forms */
+.f {
+  @apply space-y-6 relative;
+}
+
+.i {
+  @apply w-full p-3 bg-gray-900/50 border border-gray-700 rounded-xl 
+  focus:ring-2 focus:ring-blue-500/50 focus:border-transparent 
+  transition-all duration-200 backdrop-blur-sm;
+}
+
+.l {
+  @apply block text-sm font-medium mb-2 text-gray-300 tracking-wide;
+}
+
+.b {
+  @apply w-full py-3 px-6 bg-gradient-to-r from-blue-500 to-purple-500 
+  rounded-xl font-medium transition-all duration-300
+  hover:opacity-90 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/20
+  active:scale-[0.98] active:shadow-inner;
+}
+
+/* Layout */
+.gc {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+
+/* Navigation */
+.n {
+  @apply block px-4 py-3 mb-2 rounded-lg transition-all duration-200
+  hover:bg-gray-700/50 hover:translate-x-1;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Glass effect */
+.glass {
+  @apply backdrop-blur-xl bg-gradient-to-br from-gray-800/50 to-gray-900/50;
+}

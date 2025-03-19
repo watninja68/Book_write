@@ -1,0 +1,29 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+
+const links = [
+  { href: "/long-form", title: "Long-form Book Writer" },
+  { href: "/ebook", title: "E-book Writer" },
+  { href: "/guide", title: "Writing Guider" },
+  { href: "/creator", title: "E-Book Creator" },
+  { href: "/chapter", title: "Chapter Creator" }
+];
+---
+
+<DashboardLayout title="Dashboard">
+  <div class="space-y-8">
+    <div class="d float">
+      <h2 class="t2 text-gray-300">Credits Available</h2>
+      <p class="text-4xl font-bold g">250</p>
+      <p class="text-sm text-gray-400">Monthly Pack Credits</p>
+    </div>
+
+    <div class="gc">
+      {links.map(link => (
+        <a href={link.href} class="d dh">
+          <h3 class="t3 g">{link.title}</h3>
+        </a>
+      ))}
+    </div>
+  </div>
+</DashboardLayout>

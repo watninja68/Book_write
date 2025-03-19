@@ -1,0 +1,20 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Support Tickets">
+  <div class="c d">
+    <h2 class="t1 g mb-8">Create Support Ticket</h2>
+    <form class="f">
+      <div>
+        <label class="l">Ticket Title</label>
+        <input type="text" class="i" maxlength="50" required>
+      </div>
+      <div>
+        <label class="l">Ticket Description</label>
+        <textarea class="i h-48" maxlength="3000" required></textarea>
+      </div>
+      <button type="submit" class="b">Submit Ticket</button>
+    </form>
+  </div>
+</DashboardLayout>

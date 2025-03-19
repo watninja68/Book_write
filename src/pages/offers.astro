@@ -1,0 +1,29 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+
+const offers = [
+  {
+    title: "New User Special",
+    description: "Get 50% extra credits on your first purchase. Perfect for new authors looking to kickstart their writing journey with our AI-powered tools."
+  },
+  {
+    title: "Premium Package",
+    description: "Unlock unlimited access to all writing tools for 30 days, including priority support and exclusive writing templates. Best value for serious writers."
+  },
+  {
+    title: "Referral Bonus",
+    description: "Invite your fellow writers and earn 100 bonus credits for each successful referral. Help grow our community while earning rewards."
+  }
+];
+---
+
+<DashboardLayout title="Gifts and Offers">
+  <div class="gc">
+    {offers.map(offer => (
+      <div class="d dh float">
+        <h3 class="t2 g">{offer.title}</h3>
+        <p class="text-gray-300">{offer.description}</p>
+      </div>
+    ))}
+  </div>
+</DashboardLayout>

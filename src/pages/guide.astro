@@ -1,0 +1,37 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Writing Guider">
+  <div class="c d">
+    <h2 class="t1 g mb-8">Writing Guide Creator</h2>
+    <form class="f">
+      <div>
+        <label class="l">Book Title</label>
+        <input type="text" class="i" required>
+      </div>
+      <div>
+        <label class="l">Book Description</label>
+        <textarea class="i h-32" required></textarea>
+      </div>
+      <div>
+        <label class="l">Number of Chapters</label>
+        <select class="i">
+          {Array.from({ length: 30 }, (_, i) => (
+            <option value={i + 1}>{i + 1}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label class="l">Tone</label>
+        <select class="i">
+          <option value="professional">Professional</option>
+          <option value="friendly">Friendly</option>
+          <option value="casual">Casual</option>
+          <option value="corporate">Corporate</option>
+        </select>
+      </div>
+      <button type="submit" class="b">Generate Guide</button>
+    </form>
+  </div>
+</DashboardLayout>

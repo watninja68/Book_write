@@ -1,0 +1,24 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Contact">
+  <div class="c d">
+    <h2 class="t1 g mb-8">Contact Us</h2>
+    <form class="f">
+      <div>
+        <label class="l">Name</label>
+        <input type="text" class="i" required>
+      </div>
+      <div>
+        <label class="l">Email</label>
+        <input type="email" class="i" required>
+      </div>
+      <div>
+        <label class="l">Message</label>
+        <textarea class="i h-32" required></textarea>
+      </div>
+      <button type="submit" class="b">Send Message</button>
+    </form>
+  </div>
+</DashboardLayout>
