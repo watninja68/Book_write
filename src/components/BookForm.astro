@@ -40,7 +40,7 @@ const { title = "Create Book" } = Astro.props;
     };
 
     try {
-      const res = await fetch('/generate-book', { 
+      const res = await fetch('http://localhost:5000/generate-book', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
