@@ -1,7 +1,9 @@
 ---
 const { title = "Create Book" } = Astro.props;
 ---
-<div class="c d">
+
+<!-- Form layout -->
+<div class="c d relative">
   <h2 class="t1 g mb-8">{title}</h2>
   <form id="bookForm" class="f">
     <div>
@@ -22,41 +24,172 @@ const { title = "Create Book" } = Astro.props;
     </div>
     <button type="submit" class="b">Create Book</button>
   </form>
-  <div id="bookContent" class="mt-8"></div>
 </div>
 
+<!-- Modal overlay for loading -->
+<div 
+  id="loadingModal"
+  class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50"
+>
+  <div class="bg-gray-800 rounded p-6 text-gray-100 max-w-sm w-full">
+    <p class="mb-4">Creating book, please wait...</p>
+    <div class="spinner mx-auto"></div>
+  </div>
+</div>
+
+<!-- Simple spinner styles (optional) -->
+<style>
+  .spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: #09f;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  /* Utility to show/hide modal */
+  .hidden {
+    display: none;
+  }
+</style>
+
 <script type="module">
-  const form = document.getElementById('bookForm');
-  const bookContentDiv = document.getElementById('bookContent');
+// 1) Import Marked from a CDN for client-side Markdown parsing.
+import { marked } from 'https://cdn.jsdelivr.net/npm/marked@4.3.0/lib/marked.esm.js';
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(form);
-    const payload = {
-      title: formData.get('title'),
-      description: formData.get('description'),
-      chapters: parseInt(formData.get('chapters'), 10)
-    };
+// Elements
+const form = document.getElementById('bookForm');
+const loadingModal = document.getElementById('loadingModal');
 
-    try {
-      const res = await fetch('http://localhost:5000/generate-book', { 
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-      
-      const data = await res.json();
-      if (data.error) {
-        bookContentDiv.innerHTML = `<p>Error: ${data.error}</p>`;
-      } else {
-        // Display the book content; you might want to render Markdown properly here.
-        bookContentDiv.innerHTML = `<pre>${data.book}</pre>`;
-      }
-    } catch (err) {
-      bookContentDiv.innerHTML = `<p>Error: ${err.message}</p>`;
+// Helper to extract a main title if the text starts with "# ...",
+// and to transform lines beginning with "Chapter" into "## Chapter"
+// so Marked will parse them as headings.
+function preprocessMarkdown(markdown) {
+  const lines = markdown.split('\n');
+  let mainTitle = null;
+  let mainTitleIndex = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    // Find first "# " line
+    if (!mainTitle && trimmed.startsWith('# ')) {
+      mainTitle = trimmed.replace(/^# /, '').trim();
+      mainTitleIndex = i;
+      break;
     }
+  }
+
+  // Remove the main title line from the text
+  if (mainTitleIndex !== -1) {
+    lines.splice(mainTitleIndex, 1);
+  }
+
+  // Convert lines starting with "Chapter" into "## Chapter" headings
+  // so that Marked will parse them as <h2>.
+  const processedLines = lines.map((line) => {
+    const trimmed = line.trimStart();
+    if (trimmed.startsWith('Chapter')) {
+      // Insert "## " before "Chapter"
+      return `## ${line}`;
+    }
+    return line;
   });
+
+  return { mainTitle, body: processedLines.join('\n') };
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  // Show modal overlay
+  loadingModal.classList.remove('hidden');
+  
+  const formData = new FormData(form);
+  const payload = {
+    title: formData.get('title'),
+    description: formData.get('description'),
+    chapters: parseInt(formData.get('chapters'), 10)
+  };
+
+  try {
+    const res = await fetch('http://localhost:5000/generate-book', { 
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    const data = await res.json();
+    
+    // Hide modal
+    loadingModal.classList.add('hidden');
+
+    if (data.error) {
+      // Replace the body content with an error message
+      document.body.innerHTML = `
+        <div class="p-8 max-w-3xl mx-auto">
+          <div class="flex justify-between items-center mb-4">
+            <button
+              onclick="location.href='/'"
+              class="px-4 py-2 bg-blue-500 text-white rounded"
+            >
+              Back
+            </button>
+            <h1 class="text-2xl font-bold">Error</h1>
+          </div>
+          <p class="text-red-400">Error: ${data.error}</p>
+        </div>
+      `;
+    } else {
+      // Preprocess the text to find the main title and convert "Chapter" lines
+      let { mainTitle, body } = preprocessMarkdown(data.book);
+      // If none found, fallback to user's input
+      const finalTitle = mainTitle || payload.title;
+      
+      // Convert to HTML
+      const htmlContent = marked.parse(body);
+
+      // Overwrite the entire body with just the book content
+      document.body.innerHTML = `
+        <div class="p-8 max-w-3xl mx-auto">
+          <div class="flex justify-between items-center mb-8">
+            <button
+              onclick="location.href='/'"
+              class="px-4 py-2 bg-blue-500 text-white rounded"
+            >
+              Back
+            </button>
+            <h1 class="text-2xl font-bold">${finalTitle}</h1>
+          </div>
+          <article class="prose prose-invert prose-lg max-w-none leading-relaxed space-y-4">
+            ${htmlContent}
+          </article>
+        </div>
+      `;
+    }
+  } catch (err) {
+    // Hide modal if fetch fails
+    loadingModal.classList.add('hidden');
+
+    document.body.innerHTML = `
+      <div class="p-8 max-w-3xl mx-auto">
+        <div class="flex justify-between items-center mb-4">
+          <button
+            onclick="location.href='/'"
+            class="px-4 py-2 bg-blue-500 text-white rounded"
+          >
+            Back
+          </button>
+          <h1 class="text-2xl font-bold">Error</h1>
+        </div>
+        <p class="text-red-400">Error: ${err.message}</p>
+      </div>
+    `;
+  }
+});
 </script>
