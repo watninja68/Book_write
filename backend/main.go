@@ -13,6 +13,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/joho/godotenv"
+	"github.com/gofiber/fiber/v3/middleware/cors"
 )
 
 // BookRequest represents the request body for book generation.
@@ -53,6 +54,8 @@ func main() {
 	}
 
 	app := fiber.New()
+
+	app.Use(cors.New())
 
 	app.Get("/", func(c fiber.Ctx) error {
 		return c.SendString("Hello There!")

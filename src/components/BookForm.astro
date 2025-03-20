@@ -1,21 +1,20 @@
 ---
 const { title = "Create Book" } = Astro.props;
 ---
-
 <div class="c d">
   <h2 class="t1 g mb-8">{title}</h2>
-  <form class="f">
+  <form id="bookForm" class="f">
     <div>
       <label class="l">Book Title</label>
-      <input type="text" class="i" required>
+      <input type="text" name="title" class="i" required>
     </div>
     <div>
       <label class="l">Book Description</label>
-      <textarea class="i h-32" required></textarea>
+      <textarea name="description" class="i h-32" required></textarea>
     </div>
     <div>
       <label class="l">Number of Chapters</label>
-      <select class="i">
+      <select name="chapters" class="i">
         {Array.from({ length: 30 }, (_, i) => (
           <option value={i + 1}>{i + 1}</option>
         ))}
@@ -23,4 +22,41 @@ const { title = "Create Book" } = Astro.props;
     </div>
     <button type="submit" class="b">Create Book</button>
   </form>
+  <div id="bookContent" class="mt-8"></div>
 </div>
+
+<script type="module">
+  const form = document.getElementById('bookForm');
+  const bookContentDiv = document.getElementById('bookContent');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const payload = {
+      title: formData.get('title'),
+      description: formData.get('description'),
+      chapters: parseInt(formData.get('chapters'), 10)
+    };
+
+    try {
+      const res = await fetch('/generate-book', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await res.json();
+      if (data.error) {
+        bookContentDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+      } else {
+        // Display the book content; you might want to render Markdown properly here.
+        bookContentDiv.innerHTML = `<pre>${data.book}</pre>`;
+      }
+    } catch (err) {
+      bookContentDiv.innerHTML = `<p>Error: ${err.message}</p>`;
+    }
+  });
+</script>
