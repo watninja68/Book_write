@@ -1,54 +1,52 @@
 // web/app/callback/callback.go
+
 package callback
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/session"
-	
-	"01-Login/platform/authenticator"
+	"net/http"
+
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
+
+	"backend/platform/authenticator"
 )
 
 // Handler for our callback.
-func Handler(auth *authenticator.Authenticator) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		// Get session from store
-		store := session.New()
-		sess, err := store.Get(c)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+func Handler(auth *authenticator.Authenticator) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		session := sessions.Default(ctx)
+		if ctx.Query("state") != session.Get("state") {
+			ctx.String(http.StatusBadRequest, "Invalid state parameter.")
+			return
 		}
-		
-		// Verify state parameter
-		if c.Query("state") != sess.Get("state") {
-			return c.Status(fiber.StatusBadRequest).SendString("Invalid state parameter.")
-		}
-		
+
 		// Exchange an authorization code for a token.
-		token, err := auth.Exchange(c.Context(), c.Query("code"))
+		token, err := auth.Exchange(ctx.Request.Context(), ctx.Query("code"))
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).SendString("Failed to exchange an authorization code for a token.")
+			ctx.String(http.StatusUnauthorized, "Failed to exchange an authorization code for a token.")
+			return
 		}
-		
-		// Verify ID token
-		idToken, err := auth.VerifyIDToken(c.Context(), token)
+
+		idToken, err := auth.VerifyIDToken(ctx.Request.Context(), token)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString("Failed to verify ID Token.")
+			ctx.String(http.StatusInternalServerError, "Failed to verify ID Token.")
+			return
 		}
-		
-		// Extract profile information from claims
+
 		var profile map[string]interface{}
 		if err := idToken.Claims(&profile); err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+			ctx.String(http.StatusInternalServerError, err.Error())
+			return
 		}
-		
-		// Store tokens and profile in session
-		sess.Set("access_token", token.AccessToken)
-		sess.Set("profile", profile)
-		if err := sess.Save(); err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+
+		session.Set("access_token", token.AccessToken)
+		session.Set("profile", profile)
+		if err := session.Save(); err != nil {
+			ctx.String(http.StatusInternalServerError, err.Error())
+			return
 		}
-		
+
 		// Redirect to logged in page.
-		return c.Redirect("/user", fiber.StatusTemporaryRedirect)
+		ctx.Redirect(http.StatusTemporaryRedirect, "/user")
 	}
 }

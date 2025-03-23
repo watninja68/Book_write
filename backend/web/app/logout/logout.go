@@ -1,39 +1,38 @@
 // web/app/logout/logout.go
+
 package logout
 
 import (
+	"net/http"
 	"net/url"
 	"os"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
 )
 
 // Handler for our logout.
-func Handler(c *fiber.Ctx) error {
-	// Build Auth0 logout URL
+func Handler(ctx *gin.Context) {
 	logoutUrl, err := url.Parse("https://" + os.Getenv("AUTH0_DOMAIN") + "/v2/logout")
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+		ctx.String(http.StatusInternalServerError, err.Error())
+		return
 	}
 
-	// Determine protocol (http or https)
 	scheme := "http"
-	if c.Protocol() == "https" {
+	if ctx.Request.TLS != nil {
 		scheme = "https"
 	}
 
-	// Build the return URL
-	returnTo, err := url.Parse(scheme + "://" + c.Hostname())
+	returnTo, err := url.Parse(scheme + "://" + ctx.Request.Host)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+		ctx.String(http.StatusInternalServerError, err.Error())
+		return
 	}
 
-	// Add query parameters
 	parameters := url.Values{}
 	parameters.Add("returnTo", returnTo.String())
 	parameters.Add("client_id", os.Getenv("AUTH0_CLIENT_ID"))
 	logoutUrl.RawQuery = parameters.Encode()
 
-	// Redirect to Auth0 logout page
-	return c.Redirect(logoutUrl.String(), fiber.StatusTemporaryRedirect)
+	ctx.Redirect(http.StatusTemporaryRedirect, logoutUrl.String())
 }

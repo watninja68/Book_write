@@ -1,5 +1,3 @@
-
-
 package main
 
 import (
@@ -13,6 +11,8 @@ import (
 	"os"
 	"time"
 
+	/* "backend/platform/authenticator"*/
+	/*"backend/platform/router"*/
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -34,8 +34,8 @@ type QwenMessage struct {
 
 // QwenAPIRequest represents the request body for the Qwen API.
 type QwenAPIRequest struct {
-	Model        string `json:"model"`
-	Input        struct {
+	Model string `json:"model"`
+	Input struct {
 		Messages []QwenMessage `json:"messages"`
 	} `json:"input"`
 	ResultFormat string `json:"result_format"`
@@ -206,4 +206,3 @@ func callQwenAPI(req QwenAPIRequest, apiKey string) (string, error) {
 
 	return qwenResp.Output.Text, nil
 }
-

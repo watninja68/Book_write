@@ -1,4 +1,5 @@
 // web/app/login/login.go
+
 package login
 
 import (
@@ -6,35 +7,30 @@ import (
 	"encoding/base64"
 	"net/http"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/session"
-	
-	"../../../platform/authenticator"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
+
+	"backend/platform/authenticator"
 )
 
 // Handler for our login.
-func Handler(auth *authenticator.Authenticator) fiber.Handler {
-	return func(c *fiber.Ctx) error {
+func Handler(auth *authenticator.Authenticator) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
 		state, err := generateRandomState()
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+			ctx.String(http.StatusInternalServerError, err.Error())
+			return
 		}
-		
-		// Get session from store
-		store := session.New()
-		sess, err := store.Get(c)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+
+		// Save the state inside the session.
+		session := sessions.Default(ctx)
+		session.Set("state", state)
+		if err := session.Save(); err != nil {
+			ctx.String(http.StatusInternalServerError, err.Error())
+			return
 		}
-		
-		// Save the state inside the session
-		sess.Set("state", state)
-		if err := sess.Save(); err != nil {
-			return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
-		}
-		
-		// Redirect to Auth0 login page
-		return c.Redirect(auth.AuthCodeURL(state), fiber.StatusTemporaryRedirect)
+
+		ctx.Redirect(http.StatusTemporaryRedirect, auth.AuthCodeURL(state))
 	}
 }
 
@@ -44,6 +40,8 @@ func generateRandomState() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	state := base64.StdEncoding.EncodeToString(b)
+
 	return state, nil
 }

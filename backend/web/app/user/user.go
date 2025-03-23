@@ -1,25 +1,18 @@
 // web/app/user/user.go
+
 package user
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/session"
+	"net/http"
+
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
 )
 
 // Handler for our logged-in user page.
-func Handler(c *fiber.Ctx) error {
-	// Get session from store
-	store := session.New()
-	sess, err := store.Get(c)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
-	}
-	
-	// Get profile from session
-	profile := sess.Get("profile")
-	
-	// Render user template with profile data
-	return c.Render("user", fiber.Map{
-		"profile": profile,
-	})
+func Handler(ctx *gin.Context) {
+	session := sessions.Default(ctx)
+	profile := session.Get("profile")
+
+	ctx.HTML(http.StatusOK, "user.html", profile)
 }
