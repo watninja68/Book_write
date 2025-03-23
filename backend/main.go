@@ -1,3 +1,5 @@
+
+
 package main
 
 import (
@@ -11,9 +13,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	"github.com/gofiber/fiber/v3/middleware/cors"
 )
 
 // BookRequest represents the request body for book generation.
@@ -53,22 +55,23 @@ func main() {
 		log.Println("Warning: Error loading .env file:", err)
 	}
 
-	app := fiber.New()
+	router := gin.Default()
 
-	app.Use(cors.New())
+	// Configure CORS
+	router.Use(cors.Default())
 
-	app.Get("/", func(c fiber.Ctx) error {
-		return c.SendString("Hello There!")
+	router.GET("/", func(c *gin.Context) {
+		c.String(http.StatusOK, "Hello There!")
 	})
 
-	app.Get("/health", func(c fiber.Ctx) error {
-		return c.JSON(fiber.Map{
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
 			"status":    "healthy",
 			"timestamp": time.Now().Format(time.RFC3339),
 		})
 	})
 
-	app.Post("/generate-book", generateBook)
+	router.POST("/generate-book", generateBook)
 
 	// Get port from environment variable or use default.
 	port := os.Getenv("PORT")
@@ -76,23 +79,25 @@ func main() {
 		port = "3000"
 	}
 
-	log.Fatal(app.Listen(":" + port))
+	log.Fatal(router.Run(":" + port))
 }
 
-func generateBook(c fiber.Ctx) error {
-	// Parse the request body using BodyParser.
+func generateBook(c *gin.Context) {
+	// Parse the request body using ShouldBindJSON.
 	var req BookRequest
-    if err := c.Bind().Body(&req); err != nil {  // Corrected method call
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "error": "Invalid request body",
-        })
-    }
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
 
 	// Validate the request.
 	if req.Title == "" || req.Description == "" || req.Chapters <= 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Title, description, and chapters are required",
 		})
+		return
 	}
 
 	// Get the API key from the request or the environment variable.
@@ -100,9 +105,10 @@ func generateBook(c fiber.Ctx) error {
 	if apiKey == "" {
 		apiKey = os.Getenv("QWEN_API_KEY")
 		if apiKey == "" {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "API key is required either in request or environment variable",
 			})
+			return
 		}
 	}
 
@@ -136,13 +142,14 @@ Create a compelling opening and satisfying conclusion.`, req.Title, req.Descript
 	// Call the Qwen API.
 	bookContent, err := callQwenAPI(qwenReq, apiKey)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to generate book: " + err.Error(),
 		})
+		return
 	}
 
 	// Return the generated book.
-	return c.JSON(fiber.Map{
+	c.JSON(http.StatusOK, gin.H{
 		"book": bookContent,
 	})
 }
@@ -199,3 +206,4 @@ func callQwenAPI(req QwenAPIRequest, apiKey string) (string, error) {
 
 	return qwenResp.Output.Text, nil
 }
+
